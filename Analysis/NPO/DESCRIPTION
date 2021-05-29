@@ -1,0 +1,46 @@
+Package: NPO
+Type: Package
+Title: Network Parameters Outlier
+Version: 0.1.0
+Authors@R: person("Mark", "Bower", email = "mark.bower@yale.edu",
+  role = c("aut", "cre"))
+Description: Builds a network of correlations among detections to graphical clustering algorithms to identify biological signal generators.
+Depends: R (>= 4.0.0)
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.1
+NeedsCompilation: yes
+Imports:
+    meftools (>= 0.0-9),
+    itertools (>= 0.1-3),
+    iterators (>= 1.0.12),
+    Rcpp (>= 1.0.5),
+    signal (>= 0.7-6),
+    doParallel (>= 1.0.15),
+    foreach (>= 1.5.0),
+    secret (>= 1.1.0),
+    stringr (>= 1.4.0),
+    RMySQL (>= 0.10.20),
+    DBI (>= 1.1.0),
+    ggplot2 (>= 3.3.2),
+    topconnect (>= 0.0-9),
+    topsecret (>= 0.0-9),
+    topigraph (>= 0.0-9),
+    crayon (>= 1.3.4),
+    here (>= 0.1),
+    GGally (>= 2.1.0),
+    ggnetwork (>= 0.5.8),
+    dplyr (>= 1.0.2),
+    ggpubr (>= 0.4.0),
+    Rfast (>= 2.0.1),
+    reshape2 (>= 1.4.4),
+    ggplot2 (>= 3.3.2),
+    igraph (>= 1.2.5)    
+Suggests: 
+    knitr,
+    testthat (>= 3.0.2),
+    rmarkdown,
+VignetteBuilder: knitr
+LinkingTo: 
+    Rcpp
