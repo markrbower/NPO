@@ -14,7 +14,7 @@ findGlobalCommunities <- function( output, message ) {
   # Round 1
   save(file="parallelWindowNPO.RData",output)
   
-  message_idx <- sapply( message, function(x) which(output$time==x))
+  message_idx <- seq(1,length(output$time))
   for ( idx in message_idx ) {
     incident <- as.numeric(unlist(strsplit(output[idx,'incident'],",")))
     if ( length(incident) > 0 ) {
@@ -56,7 +56,7 @@ findGlobalCommunities <- function( output, message ) {
       output[idx,'clusterid'] = as.numeric(maxID)  #
     }
   } # message_idx
-  save(file="parallelWindowNPO_2.RData",output)
+#  save(file="parallelWindowNPO_2.RData",output)
   
   # Round 2
   undecided_idx <- which( is.na( output[message_idx,'clusterid']) )

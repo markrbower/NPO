@@ -1,4 +1,4 @@
-findLocalCommunitiesCW <- function( output=NULL, CW, CC, message, times, waveforms ) {
+findLocalCommunitiesCW <- function( CW, CC, times, waveforms ) {
   # Final data structure (called output):
   # timestamp   clusterid   incident   weights
   #
@@ -13,20 +13,23 @@ findLocalCommunitiesCW <- function( output=NULL, CW, CC, message, times, wavefor
   
   # One difference with the existing solution is that CC are already computed.
   # Therefore, do I need to store the waveform in the vertex attrributes?
-
+  
+#  # Get the start and stop times of the associated message
+#  messageTimeStart <- attr( CC, 'timeStart' )
+#  messageTimeStop  <- attr( CC, 'timeStop' )
+#  
+#  message <- sort( times[which(times>=messageTimeStart & times<=messageTimeStop)])
+  
   # Normalize weights
   CC$weight <- (1 + CC$weight)/2
   
   # Create the full graph
-  uniqueSource <- unique( as.numeric(CC$Tsource) )
-  uniqueTarget <- unique( as.numeric(CC$Ttarget) )
-  uniqueTimes <- sort( union( uniqueSource, uniqueTarget ) )
-  
   grph <- igraph::graph.data.frame(CC[c('Tsource','Ttarget','weight')], directed=FALSE)
 
+  output <- NULL
   # Process the sub-graphs
-  for ( tCN in message ) {
-    wv <- paste0( waveforms[[ which( unlist(times)==tCN) ]], collapse=',' )
+  for ( tCN in times ) {
+    wv <- paste0( waveforms[[ which( times==tCN) ]], collapse=',' )
     sub_grph <- igraph::induced_subgraph(grph, ( as.numeric(V(grph)$name)>=(tCN-CW) & as.numeric(V(grph)$name)<=(tCN+CW)),impl="auto")
     #    	compute communities
     sub_cliques <- cluster_louvain( sub_grph, weight=igraph::get.edge.attribute(sub_grph, 'weight' ) )
@@ -47,7 +50,7 @@ findLocalCommunitiesCW <- function( output=NULL, CW, CC, message, times, wavefor
       str_incident <- paste0( as.numeric(setdiff( as.numeric(union( enz[,1], enz[,2] )), tCN )), collapse=",")
       str_weights <- paste0( weights, collapse=',' )
     } else {
-      
+      clusterid <- NA
       # Is tCN even in the graph?
       tCN_idx <- topigraph:::IDv(sub_grph, tCN)
       if ( length( unlist(tCN_idx) ) > 0 ) {
@@ -68,6 +71,7 @@ findLocalCommunitiesCW <- function( output=NULL, CW, CC, message, times, wavefor
       output <- rbind( output, data.frame( time=tCN, clusterid=NA, incident=str_incident, weights=str_weights , waveform=wv ) )
     }
   }
+  
   return( output )
 }
 

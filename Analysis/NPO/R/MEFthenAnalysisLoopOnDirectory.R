@@ -25,23 +25,6 @@ MEFthenAnalysisLoopOnDirectory <- function( variables, dbName, table_names ) {
   signal_table <- table_names['P']
   #print( paste0( "MEFthen: signal_table: ", signal_table))
   cluster_table <- table_names['C']
-#  correlationWindow <- 5*1E6
-  
-#  print( variables )
-#  
-#  parameter_fields <- str_split( variables$variables, ':::' )
-#  values_list <- unlist( lapply( parameter_fields, function(x) str_split(x,'::')) )
-#  cnt <- 1
-#  L <- length(values_list)
-#  while ( cnt < L ) {
-#    if ( values_list[cnt] == 'correlationWindow' ) {
-#      correlationWindow <- as.numeric(values_list[cnt+1])
-#    }
-#    if ( values_list[cnt] == 'CCthreshold' ) {
-#      CCthreshold <- as.numeric(values_list[cnt+1])
-#    }
-#    cnt <- cnt + 2
-#  }
   #print( variables)
   if ( 'correlationWindow' %in% names(variables) ) {
     correlationWindow <- variables$correlationWindow
@@ -49,11 +32,6 @@ MEFthenAnalysisLoopOnDirectory <- function( variables, dbName, table_names ) {
   if ( 'CCthreshold' %in% names(variables) ) {
     CCthreshold <- variables$CCthreshold
   }
-  #print( correlationWindow )
-  #print( CCthreshold )
-   
-#  print( correlationWindow )
-
 
   cl<-parallel::makeCluster(8,outfile="",setup_strategy = "sequential")
   doParallel::registerDoParallel(cl)
@@ -82,8 +60,6 @@ MEFthenAnalysisLoopOnDirectory <- function( variables, dbName, table_names ) {
   }
   DBI::dbDisconnect( conn )
 
-  #print( "Database closed")
-  
   # Iterate over each data file
   #print( variables$path )
   fileIter <- NPO:::DIRiter( variables$path, variables$subject, variables$centerTime )

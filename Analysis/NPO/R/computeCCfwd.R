@@ -30,6 +30,10 @@ computeCCfwd <- function( CW, cc_threshold, ed_threshold, counter, time, voltage
 
   # Pack
   result <- list( CC=CC, CC_next=CC_next )
+  attr( result, 'timeStart' ) <- min( time )
+  attr( result, 'timeStop'  ) <- max( time )
+  
+  return( result )
 }
 
 
