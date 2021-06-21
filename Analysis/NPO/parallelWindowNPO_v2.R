@@ -1,22 +1,60 @@
 parallelWindowNPO <- function() {
-  # Built from parallelWindowNPO_v2.R
-  #
-  # The big changes is moving from "toy data" to reading data files.
-  #
-  # v3.0
+  # Built from parallelWindowNPO_v1.R
+  # v2.0
   # June 10, 2021
   # Mark R. Bower
   # Yale University
-  #' @export
-  #' @examples
-  #' \dontrun{
-  #'  dbName='NV', path='/Users/markrbower/Documents/Data/NV/NVC1001_24_005_2', taskName='preprocessing', institution='Yale', lab='NSME', experiment='NeuroVista', subject='24_005', signalType='IIS', centerTime=0, iterationType='directory', range=c(-3000,2000), hostname='localhost', db_user='root', password=''
-  #' }
   library(future)
-  plan(multisession,workers=5) # "multisession" is portable, "multicore" is not
+  plan(multisession,workers=6) # "multisession" is portable, "multicore" is not
   
+  source('~/Dropbox/Documents/Concepts/2019_11_19_NetworkParameterOutlier/NPO/Analysis/NPO/parallelWindowNPO_test.R')
   
+  set.seed(1)
   
+  # Create data
+  v <- matrix( nrow=4, ncol=7 )
+  v[1,] <- c( 0, 5, 20, -30, -50, 0, 0 )
+  v[2,] <- -1 * c( 0, 5, 20, -30, -50, -20, 0 )
+  v[3,] <- c( 0, 10, 50, -120, -100, -80, -40 )
+  v[4,] <- c( 0, 0, 0, 0, 0, 0, 0 )
+  
+  # Model parameters
+  SD = 5
+  DRIFT_MAG = 2.0
+  DRIFT_CNT = 200
+  
+  # Algorithm parameters (6 of them)
+  bandpassFilterFrequency_High <- 6.0E3 # These aren't used here,
+  bandpassFilterFrequency_Low  <- 0.6E3 # but are included for completeness.
+  cc_threshold <- 0.85
+  ed_threshold <- 0.5
+  CW <- 2000  # Correlation Window duration
+  firingRateThreshold <- 0.01 # In Hz
+
+  MW <- 20000 # Message Window: Each window should get 100 samples, so 10 windows total
+  
+  NC <- 4 # number of categories
+  N <- 50000 # total number of peaks
+  T <- cumsum(rpois(N,lambda=5)+4) # blackout of 4
+  L <- sample( rep( c(1,2,2,3,3,3,4,4,4,4), times=N/10 ), N, replace=FALSE )
+  D <- matrix( unlist( sapply( 1:N, function(i) list( v[L[i],] + rnorm(n=7,mean=0,sd=SD)) ) ), ncol=7, byrow=TRUE )
+
+  # Add drift to cluster2
+  idx2 <- which( L == 2 )
+  length2 <- length(idx2)
+  begin_drift <- idx2[ round(length2/2) ]
+  changed_idx <- which( idx2 >= begin_drift)
+  drift_idx <- changed_idx[1:DRIFT_CNT]
+  drifted_idx <- setdiff( changed_idx, drift_idx )
+  idx_start <- drift_idx[1]
+  idx_end <- drift_idx[DRIFT_CNT]
+  D[idx2[drift_idx],] <- ( ( (DRIFT_MAG-1.0) / DRIFT_CNT ) * seq(1,DRIFT_CNT) + 1 ) * D[idx2[drift_idx],]
+  D[idx2[drifted_idx],] <- DRIFT_MAG * D[idx2[drifted_idx],]
+  
+  # Make a dataframe of the time and data
+  Dl <- list()
+  for ( j in seq(1,N) ) { Dl <- append( Dl, list(D[j,]))}
+  data <- as.data.frame( cbind( time=T, voltage=Dl ) )
   
   # Compute message/map breaks
   messages <- list()
@@ -128,6 +166,14 @@ parallelWindowNPO <- function() {
       messageTimeStop  <- attr( CC_strx, 'timeStop' )
       dataIdxGraph <- which(data$time>=messageTimeStart & data$time<=messageTimeStop)
       
+      #
+      # WHY?
+      #
+      # Why do I need to know ANY data$time OR data$voltage, given that I already have the CC values?!
+      #
+      # The only place they are used is to identify events by time to get the associated waveform to store in the output.
+      #
+
 # LINEAR vs. PARALLEL
       g_futs[[cntGraph]]<-future( NPO:::findCommunities( CC_all, CC, CW, unlist(data$time[dataIdxGraph]), data$voltage[dataIdxGraph] ) )
 #      g_futs[[cntGraph]]<-NPO:::findCommunities( CC_all, CC, CW, unlist(data$time[dataIdxGraph]), data$voltage[dataIdxGraph] )

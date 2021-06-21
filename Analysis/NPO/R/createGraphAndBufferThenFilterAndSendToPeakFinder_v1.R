@@ -1,12 +1,4 @@
 createGraphAndBufferThenFilterAndSendToPeakFinder <- function( dbName, variables, filename, subject, session, channel, seizureUsed, signal_table, cluster_table, timeConstraints, info, correlationWindow, CCthreshold=NULL, testbedFlag=FALSE ) {
-  #
-  # Creates the DIB and the GIB.
-  # Creates the analysis "buffer"
-  # Opens MEFcont.
-  # Checkpoints the P table.
-  # Iters conts, then data
-  # Filters, finds peaks and then inserts in the GIB (which connects to the DIB)
-  # 
   
   #print( "In createGraph...")
   # Computes detections for a window of size 'timeConstraints' around a single seizure
