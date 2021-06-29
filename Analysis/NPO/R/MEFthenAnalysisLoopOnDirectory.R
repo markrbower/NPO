@@ -59,6 +59,8 @@ MEFthenAnalysisLoopOnDirectory <- function( variables, dbName, table_names ) {
     taskRecordset <- DBI::dbGetQuery( conn, query )
   }
   DBI::dbDisconnect( conn )
+  #print( nrow( taskRecordset) )
+  cases <- topconnect::RSiter( taskRecordset )
 
   # Iterate over each data file
   #print( variables$path )
@@ -71,9 +73,6 @@ MEFthenAnalysisLoopOnDirectory <- function( variables, dbName, table_names ) {
     info <- meftools::mef_info( c(filename,secret::get_secret(password_key,key=secret::local_key(),vault=vault)) )
     suid <- info$header$session_unique_ID
     #print( "Got info" )
-    
-    #print( nrow( taskRecordset) )
-    cases <- topconnect::RSiter( taskRecordset )
     
     foreach::foreach(case=cases ) %dopar% { # a case is a named list: subject, channel and event_start
 #    while ( itertools::hasNext(cases) ) { # a case is a named list: subject, channel and event_start

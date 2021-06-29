@@ -1,5 +1,5 @@
 computeCCfwd <- function( CW, cc_threshold, ed_threshold, counter, time, voltage, allTime, allVoltage ) {
-  # Assumee "time" and "voltage" contain a list
+  # Assume "time" and "voltage" contain a list
 
   IDX_list <- lapply( time, function(t) which( allTime > (t) & allTime <= (t+CW) ) ) # The "fwd" part
   
