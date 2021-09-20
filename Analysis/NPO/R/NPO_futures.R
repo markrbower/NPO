@@ -12,7 +12,7 @@ NPO_futures <- function( argComp, algorithm ) {
   #
   # algorithm must have:
   #   See June 25,2021 MacJourrnal entry under "NPO/What else ..."
-  #
+  # 
 
   setOptions()
   cl<-parallel::makeCluster(8,outfile='',setup_strategy = 'sequential');

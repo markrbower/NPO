@@ -46,7 +46,7 @@ peakFinder <- function( parameters, correlationWindow, state ) {
       C <- C[-bad];
     }
   
-    # Find peaks
+  # Find peaks
   #  print( paste0( "3.2 ", attr( grph, 'masterID' ) ) )
     print( paste0( "Checking ", length(C), " peaks." ) )
     peakIdxCnt <- 0

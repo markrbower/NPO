@@ -27,6 +27,8 @@ Imports:
     topconnect (>= 0.0-9),
     topsecret (>= 0.0-9),
     topigraph (>= 0.0-9),
+    buckets (>= 0.0-9),
+    RFactories (>= 0.0-9),
     crayon (>= 1.3.4),
     here (>= 0.1),
     GGally (>= 2.1.0),

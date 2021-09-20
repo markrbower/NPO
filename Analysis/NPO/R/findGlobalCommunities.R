@@ -1,9 +1,8 @@
-findGlobalCommunities <- function( output, message ) {
+findGlobalCommunities <- function( nodes ) {
   # Connect communities by votes.
   #
-  # Usage:
-  # output <- NPO:::findGlobalCommunities( output ) # from subsequent nodes
-  # data.frame( time, clusterid=clusterid, incident=str_incident, weights=str_weights )
+  # nodes: dataframe containing the list of nodes
+  # CC: dataframe describing connections between nodes.
   #
   # Two passes: 1st. look only at the past and only assign if:
   #               - there are no previous votes
@@ -12,67 +11,48 @@ findGlobalCommunities <- function( output, message ) {
   #             2nd. look at past+present and assign to majority
 
   # Round 1
-  save(file="parallelWindowNPO.RData",output)
-  
-  message_idx <- seq(1,length(output$time))
-  for ( idx in message_idx ) {
-    incident <- as.numeric(unlist(strsplit(output[idx,'incident'],",")))
+  for ( idx in seq(1,nrow(nodes) ) ) {
+    incident <- as.numeric(unlist(strsplit(nodes$incident[idx],",")))
     if ( length(incident) > 0 ) {
-      pre <- which( incident < as.numeric(output$time[idx]) )
+      pre <- which( incident < as.numeric(nodes$time[idx]) )
       if ( length(pre) > 0 ) { # if length==0, leave clusterid as is
         incident_pre <- incident[pre]
-        incident_idx <- sapply( incident_pre, function(x) which(output$time==x))
-        clusterids <- sapply( incident_idx, function(x) as.numeric(output[x,'clusterid']) ) 
+        incident_idx <- sapply( incident_pre, function(x) which(nodes$time==x))
+        clusterids <- nodes$clusterid[incident_idx] 
         votes <- sort( table( clusterids, useNA='no' ), decreasing = TRUE )
         if ( length(votes) == 1 ) { # all previous votes agree
-          output[idx,'clusterid'] = as.numeric(names(votes)[1])        
+          nodes$clusterid = as.numeric(names(votes)[1])        
         } else if ( length(votes) > 1 ) { # can remaining votes overcome the difference?
           remaining_votes <- length(incident) - length(pre)
           vote_difference <- votes[1] - votes[2]
           if ( remaining_votes < vote_difference ) {
-            output[idx,'clusterid'] = as.numeric(names(votes)[1])        
-          } else { # yes
-            output[idx,'clusterid'] = NA  # Decide this in Round 2
+            nodese$clusterid = as.numeric(names(votes)[1])        
           }
-        } else { # all votes were 'NA'
-          output[idx,'clusterid'] = NA  # Decide this in Round 2
         }
       } else { # length(pre)==0
-        if ( all( is.na( output$clusterid ) ) ) {
-          maxID <- 0
-        } else {
-          maxID <- as.numeric(max( output$clusterid, na.rm=TRUE ))
-        }
-        maxID <- maxID + 1
-        output[idx,'clusterid'] = as.numeric(maxID)  #
+        nodes$clusterid <- maxIDfromNodesOrDatabase( nodes ) + 1
       }
-    } else {
-      if ( all( is.na( output$clusterid ) ) ) {
-        maxID <- 0
-      } else {
-        maxID <- as.numeric(max( output$clusterid, na.rm=TRUE ))
-      }
-      maxID <- maxID + 1
-      output[idx,'clusterid'] = as.numeric(maxID)  #
+    } else { # This node is isolated
+      nodes$clusterid <- maxIDfromNodesOrDatabase( nodes ) + 1
     }
   } # message_idx
-#  save(file="parallelWindowNPO_2.RData",output)
+#  save(file="parallelWindowNPO_2.RData",nodes)
   
   # Round 2
-  undecided_idx <- which( is.na( output[message_idx,'clusterid']) )
+  undecided_idx <- which( is.na( nodes$clusterid) )
   for ( idx in undecided_idx ) {
-    incident <- as.numeric(unlist(strsplit(output[idx,'incident'],",")))
-    incident_idx <- unlist( sapply( incident, function(x) which(output$time==x)) )
+    incident <- as.numeric(unlist(strsplit(nodes$incident,",")))
+    incident_idx <- unlist( sapply( incident, function(x) which(nodes$time==x)) )
     if ( all(!is.na(incident), na.rm=TRUE) & length(incident) > 0 ) {
       #print( incident_idx )
-      clusterids <- sapply( incident_idx, function(x) as.numeric(output[x,'clusterid']) ) 
+      clusterids <- nodes$clusterid[incident_idx]
       votes <- sort( table( clusterids, useNA='no' ), decreasing = TRUE )
       if ( length(votes) > 0 ) { # If isolated, leave clusterid as "NA"
-        output[idx,'clusterid'] = as.numeric(names(votes)[1])
+        nodes$clusterid = as.numeric(names(votes)[1])
       }
     }
   } # undecided_idx
-  return( output )
+  return( nodes )
 }
 
 
