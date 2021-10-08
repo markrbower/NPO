@@ -47,7 +47,7 @@ createBaseNPOtables <- function( ... ) {
   query <- paste0( "create table if not exists P (subject varchar(32),channel varchar(32),seizureUsed bigint,time bigint," )
   query <- paste0( query, "waveform mediumtext,peak double,energy double,incident mediumtext,weights mediumtext," )
   query <- paste0( query, "cluster varchar(32),clusterid int,UUID varchar(36),created_on DATETIME DEFAULT CURRENT_TIMESTAMP, ")
-  query <- paste0( query, "primary key(subject,channel,seizureUsed,time));")
+  query <- paste0( query, "primary key(subject,channel,seizureUsed,time,UUID));")
   DBI::dbGetQuery( conn, query )
 
   # M

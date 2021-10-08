@@ -1,34 +1,41 @@
-NPO_buckets <- function( compArgs, algorithm_NPO ) {
+NPO_buckets <- function( compArgs_base, algorithm_NPO ) {
   # The design priniciple is that this code should work for any analysis:
   # simply replace the algorithm given in line 36: "algo <- algorithm( algorithm_NPO, compArgs )"
   #
   # Example: script_runNPObuckets.R
   #
+  library(foreach)
+  library(future)
   setOptions()
-#  cl<-parallel::makeCluster( 4, outfile='', setup_strategy = 'sequential');
-#  doParallel::registerDoParallel(cl)
+  plan(multisession,workers=12) # "multisession" is portable, "multicore" is not
   topconnect::clearAllDBcons()
-  compArgs <- checkRestartAndPassword( compArgs )
+  compArgs_base <- checkRestartAndPassword( compArgs_base )
   bufferSizePower <- 21
-  compArgs$findClass('analysisInformer')$add( list(bufferSize=2^bufferSizePower) )
-  correlationWindow <- compArgs$get('correlationWindow')
-  cases <- topconnect::caseIter( compArgs )
-  fileIter <- NPO:::DIRiter( compArgs$get('path'), compArgs$get('subject'), compArgs$get('centerTime') )
-  while (hasNext(fileIter)) {
-    filename <- file.path( compArgs$get('path'), nextElem(fileIter)$channel, fsep=.Platform$file.sep )
+  compArgs_base$findClass('analysisInformer')$add( list(bufferSize=2^bufferSizePower) )
+  correlationWindow <- compArgs_base$get('correlationWindow')
+  fileProvider <- compArgs_base$findClass( 'fileProvider' )
+  while ( fileProvider$hasNext() ) {
+#  fileIter <- NPO:::DIRiter( compArgs_base$get('path'), compArgs_base$get('subject'), compArgs_base$get('centerTime') )
+#  while (hasNext(fileIter)) {
+    compArgs <- compArgs_base
+#    filename <- file.path( compArgs_base$get('path'), nextElem(fileIter)$channel, fsep=.Platform$file.sep )
+    filename <- fileProvider$nextElem()
+    print( filename )
     compArgs <- topconnect::appendFileMetadata( compArgs, filename ) # 'info' should be added to 'compArgs' here
-    algo <- buckets::algorithm( algorithm_NPO, compArgs )
-    #    foreach::foreach(case = cases) %dopar% { # have the ability to do files in parallel as well as run futures (below)
-    while ( hasNext(cases) ) {
-      case <- nextElem( cases )
+    cases <- topconnect::caseIter( compArgs )
+    foreach::foreach(case = cases) %dopar% { # have the ability to do files in parallel as well as run futures (below)
+#    while ( hasNext(cases) ) {
+#      case <- nextElem( cases )
+      algo <- buckets::algorithm( algorithm_NPO, compArgs )
+      compArgs$findClass('metadataInformer')$set( "case", case )
       if ( topconnect::currentProcessedLevel( compArgs, case, 0 ) ) {
         timeConstraints <- checkTimeConstraints( compArgs$get('info'), case )
         iter_conts <- meftools::MEFcont( filename, 'erlichda', compArgs$get('bufferSize'), window=timeConstraints, info=compArgs$get('info') )
         counter <- 0
-        while ( hasNext( iter_conts ) ) { # across contiguous blocks
-          iter_data <- nextElem( iter_conts )
-          while ( hasNext( iter_data ) ) {
-            data <- nextElem( iter_data )
+        while ( itertools::hasNext( iter_conts ) ) { # across contiguous blocks
+          iter_data <- iterators::nextElem( iter_conts )
+          while ( itertools::hasNext( iter_data ) ) {
+            data <- iterators::nextElem( iter_data )
             counter <- counter + 1
             attr( data, 'counter' ) <- counter
             compArgs$findClass('metadataInformer')$set( "counter", counter)
@@ -36,6 +43,9 @@ NPO_buckets <- function( compArgs, algorithm_NPO ) {
             t1 <- as.numeric( attr( data, 't1' ) )
             Tstored <- NPO:::findTheLatestTimestampProcessed( compArgs )
             if ( t1 > (Tstored - 2*correlationWindow) ) { # more to do in this data block
+              if ( (counter %% 10)==0 ) {
+                print( paste0( t0) )                
+              }
               algo$run( data )
             } else {
               print( paste0( 'Skipping ', Tstored ) )
@@ -43,6 +53,7 @@ NPO_buckets <- function( compArgs, algorithm_NPO ) {
             rm( data )
           } # next chunk of data
         } # next continuous series of chunks
+        algo$flush()
         topconnect::markAsProcessed( compArgs, case, 1 )
       } # current_processed_level
     } # next case

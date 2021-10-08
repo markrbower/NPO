@@ -3,10 +3,14 @@ computeCommunities_closure <- function( compArgs ) {
   #
   # Handle parameters: What parameter info is needed for this task?
   CW <- compArgs$get( 'correlationWindow' )
+  compArgs <- compArgs
 
   # Compute the function
   function(CC) {
-    findCommunities_localGlobal( CC, CW )
+    if ( nrow(CC) > 0 ) {
+      df <- findCommunities_localGlobal( CC, CW, compArgs )
+    }
+    return( df )
   }
 }
 

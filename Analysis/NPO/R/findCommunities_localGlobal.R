@@ -1,4 +1,4 @@
-findCommunities_localGlobal <- function( CC, CW ) {
+findCommunities_localGlobal <- function( CC, CW, compArgs ) {
   library(future)
   # A combined function call intended for use with "parallelWindowNPO.R"
   #
@@ -11,9 +11,13 @@ findCommunities_localGlobal <- function( CC, CW ) {
   # User 'parameters' to store the first and last times in the associated message.
   #
   
-  nodes <- NPO:::findLocalCommunities( CW, CC )
-  
-  # This computation only finds results for "message"
-  nodes <- NPO:::findGlobalCommunities( nodes ) # from subsequent nodes
+  nodes <- NULL
+  if ( !is.null(CC) & ncol(CC) > 0 ) {
+    nodes <- NPO:::findGraphicalCommunities( CW, CC, compArgs )
+    
+    # This computation only finds results for "message"
+    nodes <- NPO:::assignClusterids( nodes, compArgs ) # from subsequent nodes
+  }
+  return( nodes )
 }
 

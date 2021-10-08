@@ -1,6 +1,7 @@
-computeCCbwd <- function( CW, cc_threshold, ed_threshold, prev_peak_matrix, peak_matrix ) {
+computeCCbwd <- function( CW, cc_threshold, ed_threshold, prev_peak_matrix, peak_matrix, compArgs ) {
   #
-  print( "computeCCbwd" )
+#  print( "computeCCbwd" )
+  cm <- compArgs$get( 'computation_mask' )
   
   # Find those times in 'prev_peak_matrix' that connect to 'peak_matrix'
   prev_peaks <- NULL
@@ -17,45 +18,51 @@ computeCCbwd <- function( CW, cc_threshold, ed_threshold, prev_peak_matrix, peak
     compute_idx <- which( time > (T0 - CW) )
   }
   voltage <- cbind( prev_peaks, peak_matrix )
-
-  # Remember that voltage is 32 rows by the number of peaks ...
-  # Compute CC
-  # Compute IDX: "to" < "from"
-  IDX_to_list <- lapply( time[compute_idx], function(t) which( time > (t-CW) & time < (t) ) ) # The "bwd" part
-  LL <- lengths(IDX_to_list)
-  IDX_from_list <- lapply( compute_idx, function(x) rep(x,times=LL[x]) )
-  # Unroll
-  IDX_to <- unlist( IDX_to_list )
-  IDX_from <- unlist( IDX_from_list )
-  # Compute  
-  cc_all <- mapply( function(idx_to,idx_from) cor( voltage[,idx_to], voltage[,idx_from]), IDX_to, IDX_from )
-  er_all <- mapply( function(idx_to,idx_from) sum( voltage[,idx_to] * voltage[,idx_to] ) / sum( voltage[,idx_from] * voltage[,idx_from] ), IDX_to, IDX_from )
-
-  # Create the return data frame
-  V <- lapply( seq(1,length(time)), function(x) paste0(voltage[,x],collapse=',') )
-  # Unroll
-  counter=rep(attr(peak_matrix,'counter'),times=length(IDX_to))
-  Tsource=rep(time,times=lengths(IDX_from_list))
-  WVsource=rep(V,times=lengths(IDX_from_list))
-  Ttarget=time[IDX_to]
-  WVtarget=rep(V,times=lengths(IDX_to_list))
-  weight=unlist(cc_all)
-  # Keep the valid values
-  keepIdx <- which( cc_all > cc_threshold & er_all < ed_threshold & er_all > (1/ed_threshold) )
-  counter <- counter[keepIdx]
-  Tsource <- Tsource[keepIdx]
-  WVsource <- WVsource[keepIdx]
-  Ttarget <- Ttarget[keepIdx]
-  WVtarget <- WVtarget[keepIdx]
-  weight <- weight[keepIdx]
-  CC <- data.frame( counter=counter, Tsource=Tsource, Ttarget=Ttarget, weight=weight )
-  CC$WVsource <- WVsource
-  CC$WVtarget <- WVtarget
-
-#  return( result )
-  attr( CC, 'timeStart' ) <- min( time )
-  attr( CC, 'timeStop'  ) <- max( time )
-  return( CC )  
+  
+  if ( ncol(voltage) > 0 ) {
+    # Remember that voltage is 32 rows by the number of peaks ...
+    # Compute CC
+    # Compute IDX: "to" < "from"  (T"target" < T"source" )
+    # Remember, all "forward" CC (to times after the "target" will be computed when "source" becomes the "target" )
+    IDX_target_list <- lapply( time[compute_idx], function(t) which( time > (t-CW) & time < (t) ) ) # The "bwd" part
+    LL <- lengths(IDX_target_list)
+    IDX_source_list <- lapply( seq(1,length(LL)), function(x) rep(x,times=LL[x]) )
+    # Unroll
+    IDX_target <- unlist( IDX_target_list )
+    IDX_source <- unlist( IDX_source_list )
+    # Compute  
+    cc_all <- mapply( function(idx_target,idx_source) cor( voltage[cm,idx_target],  voltage[cm,idx_source]), IDX_target, IDX_source )
+    er_all <- mapply( function(idx_target,idx_source) sum( voltage[cm,idx_target] * voltage[cm,idx_target] ) /
+                                                      sum( voltage[cm,idx_source] * voltage[cm,idx_source] ), IDX_target, IDX_source )
+    # Create the return data frame
+    V <- lapply( seq(1,length(time)), function(x) paste0(voltage[,x],collapse=',') )
+    # Unroll
+    counter=rep(attr(peak_matrix,'counter'),times=length(IDX_target))
+    Tsource=time[IDX_source]
+    tV <- t(V)
+    WVsource=tV[,unlist(IDX_source_list)]
+    Ttarget=time[IDX_target]
+    WVtarget=tV[,unlist(IDX_target_list)]
+    weight=unlist(cc_all)
+    # Keep the valid values
+    keepIdx <- which( cc_all > cc_threshold & er_all < ed_threshold & er_all > (1/ed_threshold) )
+    counter <- counter[keepIdx]
+    Tsource <- round( Tsource[keepIdx] ) # This is a weird problem of text-to-numeric at large values.
+    WVsource <- WVsource[keepIdx]
+    Ttarget <- round( Ttarget[keepIdx] ) # This is a weird problem of text-to-numeric at large values.
+    WVtarget <- WVtarget[keepIdx]
+    weight <- weight[keepIdx]
+    CC <- data.frame( counter=counter, Tsource=Tsource, Ttarget=Ttarget, weight=weight )
+    CC$WVsource <- WVsource
+    CC$WVtarget <- WVtarget
+  
+  #  return( result )
+    attr( CC, 'timeStart' ) <- min( time )
+    attr( CC, 'timeStop'  ) <- max( time )
+    return( CC )
+  } else {
+    return( NULL )
+  }
 }
 
 

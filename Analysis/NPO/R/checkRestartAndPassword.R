@@ -47,7 +47,7 @@ checkRestartAndPassword <- function( compArgs ) {
   analysisInformer$add( table_names )
 
   ## From NPO:::checkRestart
-  if ( str_length( compArgs$isValid( '--restart') ) > 0 ) {
+  if ( compArgs$isValid( '--restart') ) {
     # Restart for ALL channels for this subject and centerTime
     
     # Progress
