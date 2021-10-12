@@ -7,10 +7,11 @@ NPO_buckets <- function( compArgs_base, algorithm_NPO ) {
   library(foreach)
   library(future)
   setOptions()
-  plan(multisession,workers=12) # "multisession" is portable, "multicore" is not
+  nbrWorkers <- parallel::detectCores() * 2
+  plan(multisession,workers=nbrWorkers) # "multisession" is portable, "multicore" is not
   topconnect::clearAllDBcons()
   compArgs_base <- checkRestartAndPassword( compArgs_base )
-  bufferSizePower <- 21
+  bufferSizePower <- 22
   compArgs_base$findClass('analysisInformer')$add( list(bufferSize=2^bufferSizePower) )
   correlationWindow <- compArgs_base$get('correlationWindow')
   fileProvider <- compArgs_base$findClass( 'fileProvider' )
@@ -23,9 +24,9 @@ NPO_buckets <- function( compArgs_base, algorithm_NPO ) {
     print( filename )
     compArgs <- topconnect::appendFileMetadata( compArgs, filename ) # 'info' should be added to 'compArgs' here
     cases <- topconnect::caseIter( compArgs )
-    foreach::foreach(case = cases) %dopar% { # have the ability to do files in parallel as well as run futures (below)
-#    while ( hasNext(cases) ) {
-#      case <- nextElem( cases )
+#    foreach::foreach(case = cases) %dopar% { # have the ability to do files in parallel as well as run futures (below)
+    while ( hasNext(cases) ) {
+      case <- nextElem( cases )
       algo <- buckets::algorithm( algorithm_NPO, compArgs )
       compArgs$findClass('metadataInformer')$set( "case", case )
       if ( topconnect::currentProcessedLevel( compArgs, case, 0 ) ) {
@@ -48,7 +49,7 @@ NPO_buckets <- function( compArgs_base, algorithm_NPO ) {
               }
               algo$run( data )
             } else {
-              print( paste0( 'Skipping ', Tstored ) )
+              print( paste0( 'Skipping ', t0 ) )
             }
             rm( data )
           } # next chunk of data

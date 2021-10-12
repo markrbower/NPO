@@ -1,14 +1,13 @@
-script_runNPObuckets <- function() {
+script_runNPObuckets_23_002 <- function() {
   compArgs <- RFactories::argumentComposite()
-#  dbp <- RFactories::databaseProvider(user="root",vault_user='markrbower',vault_key='NV_password',host='localhost',dbname='NV')
-  dbp <- RFactories::databaseProvider(user="root",vault_user='markrbower',vault_key='NSME_halo_password',host='localhost',dbname='nsme_halo')
+  dbp <- RFactories::databaseProvider(user="root",vault_user='localadmin',vault_key='NV_password',host='localhost',dbname='NV')
   compArgs$add( dbp )
 #  compArgs$add( RFactories::fileProvider(path='NPO/Analysis/NPO/tests/testData/Halo/11',iterationType='directory',pattern="*.mef") )
-  compArgs$add( RFactories::fileProvider(path='NPO/Analysis/NPO/tests/testData/William/2016-03-03_10-47-59',iterationType='directory',pattern="*.mef") )
-  aInf <- RFactories::analysisInformer(experiment='Halo10sec_10x',subject='11',centerTime=0,pattern="*.mef",lab="RNCP")
+  compArgs$add( RFactories::fileProvider(path="/Volumes/eplab/Raw_Data/NV_Human/NVC1001_23_002_2",iterationType='directory',pattern="*.mef") )
+  aInf <- RFactories::analysisInformer(experiment='NeuroVista',subject='23_002',pattern="*.mef")
   compArgs$add( aInf )
-  pInf <- RFactories::parameterInformer(signalType='AP')
-  pInf$loadParameters( dbp, aInf )  #  The parameterInformer requires a databaseProvidere to load parameters from the database.
+  pInf <- RFactories::parameterInformer(signalType='IIS')
+  pInf$loadParameters( dbp, pInf, aInf )  #  The parameterInformer requires a databaseProvidere to load parameters from the database.
   compArgs$add( pInf )
   
   
@@ -35,7 +34,7 @@ script_runNPObuckets <- function() {
   algorithm_NPO <- 
   "fields <<- c('subject','channel','time','waveform','clusterid','seizureUsed','peak','energy','incident','weights','UUID');
    updateFields <<- c('clusterid')
-   dib <<- topconnect::databaseInsertBuffer('NSME_halo','Halo10sec_10x_11_AP_0_1000000_50_P', fields, 100, updates=updateFields, dbuser='root', host='localhost', password='' );
+   dib <<- topconnect::databaseInsertBuffer('NSME_halo','NV', fields, 100, updates=updateFields, dbuser='root', host='localhost', password='' );
    bucket_output <<- buckets::bucket( accumulatorSize=0, NULL, dib );
    bucket_comm <<- buckets::bucket( accumulatorSize=0, NPO:::computeCommunities_closure( compArgs ), bucket_output, primeSize=5 );
    bucket_CC <<- buckets::bucket( accumulatorSize=0, NPO:::computeCC_closure( compArgs ), bucket_comm, primeSize=5 );
