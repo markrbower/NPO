@@ -4,7 +4,7 @@ checkTimeConstraints <- function( info, case ) {
   #print( case$analysisStart )
   #print( case$analysisStop )
   if ( is.null(case$analysisStart) ) {
-    print( "Start at thee beginning.")
+    print( "Start at the beginning.")
     timeConstraints['start']     <- info$header$recording_start_time + 1.01E6
   } else {
     timeConstraints['start']     <- case$analysisStart

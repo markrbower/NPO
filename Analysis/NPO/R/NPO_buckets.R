@@ -25,9 +25,12 @@ NPO_buckets <- function( compArgs_base, algorithm_NPO ) {
     compArgs <- topconnect::appendFileMetadata( compArgs, filename ) # 'info' should be added to 'compArgs' here
     cases <- topconnect::caseIter( compArgs )
 #    foreach::foreach(case = cases) %dopar% { # have the ability to do files in parallel as well as run futures (below)
+    print( paste0( "casees is a: ", class(cases) ) )
     while ( hasNext(cases) ) {
       case <- nextElem( cases )
+      print( case )
       algo <- buckets::algorithm( algorithm_NPO, compArgs )
+      print("algorithm")
       compArgs$findClass('metadataInformer')$set( "case", case )
       if ( topconnect::currentProcessedLevel( compArgs, case, 0 ) ) {
         timeConstraints <- checkTimeConstraints( compArgs$get('info'), case )
@@ -45,7 +48,7 @@ NPO_buckets <- function( compArgs_base, algorithm_NPO ) {
             Tstored <- NPO:::findTheLatestTimestampProcessed( compArgs )
             if ( t1 > (Tstored - 2*correlationWindow) ) { # more to do in this data block
               if ( (counter %% 10)==0 ) {
-                print( paste0( t0) )                
+                print( paste0( t0) )
               }
               algo$run( data )
             } else {
