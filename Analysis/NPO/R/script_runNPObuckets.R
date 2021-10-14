@@ -8,7 +8,7 @@ script_runNPObuckets <- function() {
   compArgs$add( RFactories::fileProvider(path='/Volumes/Data/NV/NVC1001_23_002_2',iterationType='directory',pattern="*.mef") )
   aInf <- RFactories::analysisInformer(experiment='Halo10sec_10x',subject='11',centerTime=0,pattern="*.mef",lab="RNCP")
   compArgs$add( aInf )
-  pInf <- RFactories::parameterInformer(signalType='AP')
+  pInf <- RFactories::parameterInformer(signalType='IIS')
   pInf$loadParameters( dbp, aInf )  #  The parameterInformer requires a databaseProvidere to load parameters from the database.
   compArgs$add( pInf )
   

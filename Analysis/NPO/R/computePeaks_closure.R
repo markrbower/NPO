@@ -32,11 +32,14 @@ computePeaks_closure <- function( compArgs ) {
       sdw = sign(dw);
       dsdw = diff(sdw);
       C = which( dsdw>0 | dsdw<0 ) + 1;
+      peak_matrix <- NULL # default
       C <- C[ which( C > abs(min(blackout_mask)) | C < (length(C)-max(blackout_mask)) ) ]
-      idx <- which( sapply( C, function(x) {NPO:::isLocalPeak_mask(x,blackout_mask,fdata)}) )
-      idx <- C[ unlist( idx )]
-      # Return the waveforms as a matrix.
-      peak_matrix <- as.matrix( sapply( idx, function(x) { NPO:::shiftThePeak_mask(x,waveform_mask,fdata)} ) )
+      if ( length(C) > 0 ) {
+        idx <- which( sapply( C, function(x) {NPO:::isLocalPeak_mask(x,blackout_mask,fdata)}) )
+        idx <- C[ unlist( idx )]
+        # Return the waveforms as a matrix.
+        peak_matrix <- as.matrix( sapply( idx, function(x) { NPO:::shiftThePeak_mask(x,waveform_mask,fdata)} ) )
+      }
       # Add time of each event and return as a data frame.
       # attr( input_data, 't0' ) gives the time of the first sample
       # attr( input_data, 'dt' ) gives the time in microseconds between each sample
