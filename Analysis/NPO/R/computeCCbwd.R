@@ -35,7 +35,7 @@ computeCCbwd <- function( CW, cc_threshold, ed_threshold, prev_peak_matrix, peak
     er_all <- mapply( function(idx_target,idx_source) sum( voltage[cm,idx_target] * voltage[cm,idx_target] ) /
                                                       sum( voltage[cm,idx_source] * voltage[cm,idx_source] ), IDX_target, IDX_source )
     # Create the return data frame
-    V <- lapply( seq(1,length(time)), function(x) paste0(format(round(voltage[,x], 2), nsmall = 2),collapse=',') )
+    V <- lapply( seq(1,length(time)), function(x) paste0( round(voltage[,x],1),collapse=',') )
     # Unroll
     counter=rep(attr(peak_matrix,'counter'),times=length(IDX_target))
     Tsource=time[IDX_source]

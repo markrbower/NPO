@@ -1,4 +1,4 @@
-NPO_buckets <- function( compArgs_base, algorithm_NPO ) {
+NPO_use_buckets <- function( compArgs_base, algorithm_NPO ) {
   # The design priniciple is that this code should work for any analysis:
   # simply replace the algorithm given in line 36: "algo <- algorithm( algorithm_NPO, compArgs )"
   #
@@ -8,7 +8,7 @@ NPO_buckets <- function( compArgs_base, algorithm_NPO ) {
   library(foreach)
   library(future)
   setOptions()
-  nbrWorkers <- parallel::detectCores()
+  nbrWorkers <- parallel::detectCores() * 2
   print( paste0( "Number of workers: ", nbrWorkers ) )
   plan(multisession,workers=nbrWorkers) # "multisession" is portable, "multicore" is not
   topconnect::clearAllDBcons()
@@ -34,7 +34,7 @@ NPO_buckets <- function( compArgs_base, algorithm_NPO ) {
       case <- nextElem( cases )
       print( case )
       algo <- buckets::algorithm( algorithm_NPO, compArgs )
-      print("algorithm")
+      algo$initialize( algo )
       compArgs$findClass('metadataInformer')$set( "case", case )
       if ( topconnect::currentProcessedLevel( compArgs, case, 0 ) ) {
         timeConstraints <- checkTimeConstraints( compArgs$get('info'), case )

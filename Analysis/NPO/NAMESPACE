@@ -2,10 +2,14 @@
 
 export(MRE_insert)
 export(NPO)
+export(NPO_buckets)
 export(NPO_testbed)
 export(NPO_window)
 export(NPO_window_byParm)
+export(NPO_window_futures)
 export(NPO_window_testbed)
+export(NPO_window_v1)
+export(NPO_window_v3)
 export(SQLiter)
 export(convertHaloData)
 export(createBaseNPOtables)
@@ -16,5 +20,3 @@ export(lastRunOfLength)
 export(longestRunOfLength)
 export(parseArg)
 export(setupResultsDatabase)
-
-

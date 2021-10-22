@@ -39,15 +39,14 @@ computePeaks_closure <- function( compArgs ) {
         idx <- C[ unlist( idx )]
         # Return the waveforms as a matrix.
         peak_matrix <- as.matrix( sapply( idx, function(x) { NPO:::shiftThePeak_mask(x,waveform_mask,fdata)} ) )
+        # Add time of each event and return as a data frame.
+        # attr( input_data, 't0' ) gives the time of the first sample
+        # attr( input_data, 'dt' ) gives the time in microseconds between each sample
+        T <- attr(input_data,'t0') + (idx-1)*attr(input_data,'dt')
+        # The waveforms must be converted to strings to do this ...
+        attr(peak_matrix, 'T' ) <- T
+        attr( peak_matrix, 'counter' ) <- attr( input_data, 'counter' )
       }
-      # Add time of each event and return as a data frame.
-      # attr( input_data, 't0' ) gives the time of the first sample
-      # attr( input_data, 'dt' ) gives the time in microseconds between each sample
-      T <- attr(input_data,'t0') + (idx-1)*attr(input_data,'dt')
-      
-      # The waveforms must be converted to strings to do this ...
-      attr(peak_matrix, 'T' ) <- T
-      attr( peak_matrix, 'counter' ) <- attr( input_data, 'counter' )
     }
     return(peak_matrix)  # This variable is passed as the input to the next "bucket".
   }

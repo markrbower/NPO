@@ -4,7 +4,6 @@ NPO_buckets <- function( compArgs_base, algorithm_NPO ) {
   #
   # Example: script_runNPObuckets.R
   #
-  #' @export
   library(foreach)
   library(future)
   setOptions()
@@ -39,9 +38,34 @@ NPO_buckets <- function( compArgs_base, algorithm_NPO ) {
       if ( topconnect::currentProcessedLevel( compArgs, case, 0 ) ) {
         timeConstraints <- checkTimeConstraints( compArgs$get('info'), case )
         iter_conts <- meftools::MEFcont( filename, 'erlichda', compArgs$get('bufferSize'), window=timeConstraints, info=compArgs$get('info') )
-        bucket_source <- buckets::bucket_source( iter_conts, algo, 5 )
-        bucket_source$begin()
-        print( "bucket_source$begin() done!")
+        
+        
+        counter <- 0
+        while ( itertools::hasNext( iter_conts ) ) { # across contiguous blocks
+          iter_data <- iterators::nextElem( iter_conts )
+          while ( itertools::hasNext( iter_data ) ) {
+              data <- iterators::nextElem( iter_data )
+              counter <- counter + 1
+              attr( data, 'counter' ) <- counter
+              compArgs$findClass('metadataInformer')$set( "counter", counter)
+              t0 <- as.numeric( attr( data, 't0' ) )
+              t1 <- as.numeric( attr( data, 't1' ) )
+              Tstored <- NPO:::findTheLatestTimestampProcessed( compArgs )
+              if ( t1 > (Tstored - 2*correlationWindow) ) { # more to do in this data block
+                if ( (counter %% 10)==0 ) {
+                  print( paste0( t0) )
+                }
+                algo$run( data )
+                print( counter )
+              } else {
+                print( paste0( 'Skipping ', t0 ) )
+              }
+              rm( data )
+          } # next chunk of data
+        } # next continuous series of chunks
+        
+        
+        
         algo$flush()
         topconnect::markAsProcessed( compArgs, case, 1 )
       } # current_processed_level
