@@ -11,13 +11,13 @@ persistBehavioralEvents <- function() {
   codes <- c('?','NREM3','NREM2','NREM1','REM','WAKE') 
   
   patient_ids <-  list(
-#    '23_002'
+    '23_002'
 #    '23_003',
 #    '23_004',
 #    '23_007',
 #    '24_002',
 #    '24_004',
-    '24_005'
+#    '24_005'
 #    '25_001',
 #    '25_002',
 #    '25_003',
@@ -26,7 +26,9 @@ persistBehavioralEvents <- function() {
   
   conn <- topconnect::db("NV")
   fields <- c('subject','session','start','stop','label')
-  dib <- topconnect::databaseInsertBuffer( conn, table='epochs', fields, limit=100 )
+#  dib <- topconnect::databaseInsertBuffer( conn, table='epochs', fields, limit=100 )
+  dib <- topconnect::databaseInsertBuffer( dbName='NV', dbTable='epochs', fields=fields, limit=100, updates=NULL, dbuser='root', host='localhost', password='' )
+
   basedir <- here( "Data" )
   base = paste0( basedir, "/classes_")
 

@@ -22,16 +22,16 @@ findValidEpochs <- function( project, subjectID, minDuration ) {
   basedir <- paste0( '/Volumes/Data/NV/NVC1001_', case$subject, '_2' )
   mef_filename <- NPO:::filenameFromCase( basedir, case )
   vault <- topsecret::get_secret_vault()
-  password_key <- paste0( 'NSME_halo_password' )
-  load( file="deleteThisTmpInfo" )
-#  info <- meftools::mef_info( c(mef_filename,secret::get_secret(password_key,key=secret::local_key(),vault=vault)) )
+  password_key <- paste0( 'NV_password' )
+#  load( file="deleteThisTmpInfo" )
+  info <- meftools::mef_info( c(mef_filename,secret::get_secret(password_key,key=secret::local_key(),vault=vault)) )
   T0 <- info$header$recording_start_time
 
   runLength <- minDuration * 2; # Assumes 'minDuration' is in minutes and behaviors are recorded in 30 sec windows.
   
   # Find all seizures.
 #  query <- paste0("select start,stop from epochs where subject=\'",subjectID,"\' and label='seizure';")
-  query <- paste0("select start,stop from epochs where subject=\'",subjectID,"\' and (label='new' or label='old');")
+  query <- paste0("select start,stop from epochs where subject=\'",subjectID,"\' and (label='new' or label='old' or label='seizure');")
   conn <- topconnect::db( project )
   seizureTimes <- DBI::dbGetQuery( conn, query )
 

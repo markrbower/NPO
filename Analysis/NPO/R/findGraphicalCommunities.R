@@ -8,7 +8,12 @@ findGraphicalCommunities <- function( CW, CC, compArgs ) {
   cm <- compArgs$get( 'computation_mask' )
   
   # Create the full graph
-  grph <- igraph::graph.data.frame(CC[c('Tsource','Ttarget','weight')], directed=FALSE)
+  tryCatch({
+    grph <- igraph::graph.data.frame(CC[c('Tsource','Ttarget','weight')], directed=FALSE)
+  },error=function(cond) {
+    print( CC[c('Tsource','Ttarget','weight')] )
+    return()
+  })
   uniqueSource <- unique( CC$Tsource )
   uniqueTarget <- unique( CC$Ttarget )
   uniqueTimes <- sort( union( uniqueSource, uniqueTarget ) )
@@ -26,30 +31,44 @@ findGraphicalCommunities <- function( CW, CC, compArgs ) {
   output$clusterid <- 0
   case <- compArgs$get('case')
   output$UUID <- case$UUID
+  # get the case
+  case <- compArgs$findClass('metadataInformer')$get('case')
+  output$seizureUsed <- as.numeric( unlist( case['centerTime'] ) )
 
   for ( idx in seq(1,length(uniqueTarget) ) ) {
-    tCN <- as.numeric(uniqueTarget[idx])
-    # Loop through the individual timestamps and find the subgraph
-    sub_grph <- igraph::induced_subgraph(grph, ( as.numeric(igraph::V(grph)$name)>=(tCN-CW) & as.numeric(igraph::V(grph)$name)<=(tCN+CW)),impl="auto")
-    #    	compute communities
-    sub_cliques <- igraph::cluster_louvain( sub_grph, weight=igraph::get.edge.attribute(sub_grph, 'weight' ) )
-    # sub_cliques_i <- cluster_infomap( sub_grph, e.weights=igraph::get.edge.attribute(grph, 'weight' ) )
-    # sub_cliques_w <- cluster_walktrap( sub_grph, weights=igraph::get.edge.attribute(grph, 'weight' ) 
-    # sub_cliques_f <- cluster_fast_greedy( sub_grph, weights=igraph::get.edge.attribute(grph, 'weight' ), membership = TRUE )
-    sub_cliques_membership <- igraph::membership( sub_cliques )
-    clusterid <- sub_cliques_membership[as.numeric(names(sub_cliques_membership))==tCN]
-    member_idx <- which( sub_cliques_membership == clusterid )
-    grph_clique <- igraph::induced_subgraph(sub_grph, member_idx )
-    # Determine the majority of incident memberships already assigned.
-
-    # needed: incident, weights
-    edz <- igraph::incident( grph_clique, topigraph::IDv(grph_clique, tCN) )
-    enz <- igraph::ends( grph_clique, edz )
-    weights <- edz$weight
-    mat <- cbind( enz, weights )
-    keep_idx <- which( as.numeric(mat[,2]) == tCN )
-    str_incident <- paste0( mat[keep_idx,1], collapse=',' )
-    str_weights <- paste0( round(as.numeric(mat[keep_idx,3]),4), collapse=',' )
+    tryCatch({
+      tCN <- as.numeric(uniqueTarget[idx])
+      # Loop through the individual timestamps and find the subgraph
+      sub_idx <- (as.numeric(igraph::V(grph)$name)>=(tCN-CW) & as.numeric(igraph::V(grph)$name)<=(tCN+CW))
+      if ( length(which(sub_idx)) > 0 ) {
+        sub_grph <- igraph::induced_subgraph(grph, sub_idx, impl="auto")
+        #    	compute communities
+        sub_cliques <- igraph::cluster_louvain( sub_grph, weight=igraph::get.edge.attribute(sub_grph, 'weight' ) )
+        # sub_cliques_i <- cluster_infomap( sub_grph, e.weights=igraph::get.edge.attribute(grph, 'weight' ) )
+        # sub_cliques_w <- cluster_walktrap( sub_grph, weights=igraph::get.edge.attribute(grph, 'weight' ) 
+        # sub_cliques_f <- cluster_fast_greedy( sub_grph, weights=igraph::get.edge.attribute(grph, 'weight' ), membership = TRUE )
+        sub_cliques_membership <- igraph::membership( sub_cliques )
+        clusterid <- sub_cliques_membership[as.numeric(names(sub_cliques_membership))==tCN]
+        member_idx <- which( sub_cliques_membership == clusterid )
+        grph_clique <- igraph::induced_subgraph(sub_grph, member_idx )
+        # Determine the majority of incident memberships already assigned.
+        
+        # needed: incident, weights
+        edz <- igraph::incident( grph_clique, topigraph::IDv(grph_clique, tCN) )
+        enz <- igraph::ends( grph_clique, edz )
+        weights <- edz$weight
+        mat <- cbind( enz, weights )
+        keep_idx <- which( as.numeric(mat[,2]) == tCN )
+        str_incident <- paste0( mat[keep_idx,1], collapse=',' )
+        str_weights <- paste0( round(as.numeric(mat[keep_idx,3]),4), collapse=',' )
+      } else {
+        print( "empty subgraph" )
+        return()
+      }
+    },error=function(cond){
+      print(cond)
+      return()
+    })
     
     # Build entry for the output dataframe
     output$time[idx] <- tCN

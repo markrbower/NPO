@@ -22,17 +22,16 @@ NPO_use_buckets <- function( compArgs_base, algorithm_NPO ) {
   while ( fileProvider$hasNext() ) {
 #  fileIter <- NPO:::DIRiter( compArgs_base$get('path'), compArgs_base$get('subject'), compArgs_base$get('centerTime') )
 #  while (hasNext(fileIter)) {
-    compArgs <- compArgs_base
+    compArgs_file <- compArgs_base
 #    filename <- file.path( compArgs_base$get('path'), nextElem(fileIter)$channel, fsep=.Platform$file.sep )
     filename <- fileProvider$nextElem()
     print( filename )
-    compArgs <- topconnect::appendFileMetadata( compArgs, filename ) # 'info' should be added to 'compArgs' here
-    cases <- topconnect::caseIter( compArgs )
+    compArgs_file <- topconnect::appendFileMetadata( compArgs_file, filename ) # 'info' should be added to 'compArgs' here
+    cases <- topconnect::caseIter( compArgs_file )
 #    foreach::foreach(case = cases) %dopar% { # have the ability to do files in parallel as well as run futures (below)
-    print( paste0( "casees is a: ", class(cases) ) )
-    while ( hasNext(cases) ) {
-      case <- nextElem( cases )
-      print( case )
+    while ( cases$hasNext() ) {
+      case <- cases$nextElem()
+      compArgs <- compArgs_file
       algo <- buckets::algorithm( algorithm_NPO, compArgs )
       algo$initialize( algo )
       compArgs$findClass('metadataInformer')$set( "case", case )
